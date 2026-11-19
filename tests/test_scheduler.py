@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,12 +14,11 @@ from oraclefusion.scheduler import (
     DependencyUnmetError,
     EnterpriseJobScheduler,
     JobDefinition,
-    JobNotFoundError,
     JobPriority,
     JobStatus,
     SchedulerError,
 )
-from oraclefusion.tables import JobDefinitionRow, JobExecutionRow, OutboxRow
+from oraclefusion.tables import JobExecutionRow, OutboxRow
 
 API_KEYS = {"admin-key": "admin", "operator-key": "operator", "viewer-key": "viewer"}
 
@@ -216,7 +214,7 @@ def test_heartbeat_and_stalled_worker_reaping(session):
 
     # Simulate expired heartbeat by backdating heartbeat_at
     exec_row = session.query(JobExecutionRow).filter_by(execution_id=exec_id).one()
-    exec_row.heartbeat_at = datetime.now(timezone.utc) - timedelta(seconds=120)
+    exec_row.heartbeat_at = datetime.now(UTC) - timedelta(seconds=120)
     session.flush()
 
     # Reap stalled executions
@@ -227,7 +225,7 @@ def test_heartbeat_and_stalled_worker_reaping(session):
 
     # Expire heartbeat again for final attempt
     exec_row.status = JobStatus.RUNNING.value
-    exec_row.heartbeat_at = datetime.now(timezone.utc) - timedelta(seconds=120)
+    exec_row.heartbeat_at = datetime.now(UTC) - timedelta(seconds=120)
     session.flush()
 
     reaped2 = scheduler.reap_stalled_executions(heartbeat_timeout_seconds=60)

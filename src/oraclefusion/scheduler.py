@@ -4,7 +4,7 @@ import json
 import math
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 
@@ -80,8 +80,8 @@ def to_utc(dt_val: datetime | None) -> datetime | None:
     if dt_val is None:
         return None
     if dt_val.tzinfo is None:
-        return dt_val.replace(tzinfo=timezone.utc)
-    return dt_val.astimezone(timezone.utc)
+        return dt_val.replace(tzinfo=UTC)
+    return dt_val.astimezone(UTC)
 
 
 class EnterpriseJobScheduler:
