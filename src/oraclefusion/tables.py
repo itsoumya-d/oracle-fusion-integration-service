@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime, timezone
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
@@ -93,3 +93,44 @@ class AuditRow(Base):
     actor: Mapped[str] = mapped_column(String(120), default="")
     reference: Mapped[str] = mapped_column(String(120), default="")
     detail: Mapped[str] = mapped_column(Text, default="")
+
+
+class JobDefinitionRow(Base):
+    __tablename__ = "job_definitions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_code: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    erp_domain: Mapped[str] = mapped_column(String(60), index=True)
+    handler: Mapped[str] = mapped_column(String(120))
+    cron_expression: Mapped[str] = mapped_column(String(60), default="")
+    timeout_seconds: Mapped[int] = mapped_column(Integer, default=300)
+    retry_limit: Mapped[int] = mapped_column(Integer, default=3)
+    concurrency_limit: Mapped[int] = mapped_column(Integer, default=5)
+    priority: Mapped[int] = mapped_column(Integer, default=2)
+    dependencies_json: Mapped[str] = mapped_column(Text, default="[]")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class JobExecutionRow(Base):
+    __tablename__ = "job_executions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    execution_id: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    job_code: Mapped[str] = mapped_column(String(80), index=True)
+    priority: Mapped[int] = mapped_column(Integer, index=True, default=2)
+    status: Mapped[str] = mapped_column(String(30), index=True, default="PENDING")
+    attempt: Mapped[int] = mapped_column(Integer, default=1)
+    max_attempts: Mapped[int] = mapped_column(Integer, default=3)
+    worker_id: Mapped[str] = mapped_column(String(100), default="")
+    scheduled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    heartbeat_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    error_message: Mapped[str] = mapped_column(Text, default="")
+    payload_json: Mapped[str] = mapped_column(Text, default="{}")
+    result_json: Mapped[str] = mapped_column(Text, default="{}")
+    idempotency_key: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+
